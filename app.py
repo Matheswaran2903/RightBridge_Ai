@@ -87,8 +87,7 @@ class AuthResponse(BaseModel):
 
 class TTSRequest(BaseModel):
     text: str = Field(..., min_length=1)
-    language: str = Field(default="hi", description="e.g. 'hi', 'ta', 'te', 'en'")
-    voice: str = Field(default="Karan", description="Karan, Simran, Nara, Riya, Viraj, or Raju")
+    voice: str = Field(default="Pranav", description="Pranav, Kaveri, Shubhra, or Deepak")
 
 
 class STTResponse(BaseModel):
@@ -279,10 +278,10 @@ def simplify(request: SimplifyRequest):
 def text_to_speech(request: TTSRequest):
     """Gnani.ai TTS — returns an mp3 audio file for the given text."""
     try:
-        audio_bytes = gnani_text_to_speech(request.text, request.language, request.voice)
+        audio_bytes = gnani_text_to_speech(request.text, request.voice)
     except RuntimeError as e:
         raise HTTPException(status_code=502, detail=str(e))
-    return Response(content=audio_bytes, media_type="audio/mpeg")
+    return Response(content=audio_bytes, media_type="audio/wav")
 
 
 @app.post("/stt", response_model=STTResponse)
