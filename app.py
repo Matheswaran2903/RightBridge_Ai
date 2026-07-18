@@ -8,9 +8,9 @@ Then open http://127.0.0.1:8000 for the chat UI, or /docs to test endpoints dire
 
 import os
 from typing import List, Optional
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -21,7 +21,8 @@ from data import (
 from ai import (
     retrieve_relevant_schemes, format_context, get_ai_reply,
     get_simple_explanation, needs_help_centers, needs_emergency_numbers,
-    HELP_CENTERS_TEXT, EMERGENCY_NUMBERS_TEXT,
+    HELP_CENTERS_TEXT, EMERGENCY_NUMBERS_TEXT, clean_scheme_text,
+    gnani_text_to_speech, gnani_speech_to_text,
 )
 
 # ---------------------------------------------------------------------------
@@ -82,6 +83,16 @@ class LoginRequest(BaseModel):
 class AuthResponse(BaseModel):
     status: str
     username: str
+
+
+class TTSRequest(BaseModel):
+    text: str = Field(..., min_length=1)
+    language: str = Field(default="hi", description="e.g. 'hi', 'ta', 'te', 'en'")
+    voice: str = Field(default="Karan", description="Karan, Simran, Nara, Riya, Viraj, or Raju")
+
+
+class STTResponse(BaseModel):
+    text: str
 
 
 class SimplifyRequest(BaseModel):
@@ -208,7 +219,19 @@ def get_scheme(scheme_id: int, db: Session = Depends(get_db)):
     scheme = db.query(Scheme).filter(Scheme.id == scheme_id).first()
     if not scheme:
         raise HTTPException(status_code=404, detail="Scheme not found.")
-    return scheme
+
+    # Build the response manually (rather than mutating `scheme` directly)
+    # so cleaned text is never accidentally written back to the database.
+    return SchemeOut(
+        id=scheme.id,
+        name=clean_scheme_text(scheme.name),
+        category=clean_scheme_text(scheme.category),
+        eligibility=clean_scheme_text(scheme.eligibility),
+        benefits=clean_scheme_text(scheme.benefits),
+        how_to_apply=clean_scheme_text(scheme.how_to_apply),
+        official_link=scheme.official_link,
+        documents_required=clean_scheme_text(scheme.documents_required),
+    )
 
 
 @app.post("/chat", response_model=ChatResponse)
@@ -250,6 +273,27 @@ def simplify(request: SimplifyRequest):
     simpler language, same facts, same language."""
     simple_reply = get_simple_explanation(request.text)
     return SimplifyResponse(reply=simple_reply)
+
+
+@app.post("/tts")
+def text_to_speech(request: TTSRequest):
+    """Gnani.ai TTS — returns an mp3 audio file for the given text."""
+    try:
+        audio_bytes = gnani_text_to_speech(request.text, request.language, request.voice)
+    except RuntimeError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    return Response(content=audio_bytes, media_type="audio/mpeg")
+
+
+@app.post("/stt", response_model=STTResponse)
+async def speech_to_text(audio: UploadFile = File(...), language: str = "hi-IN"):
+    """Gnani.ai STT — accepts an uploaded audio file, returns transcribed text."""
+    audio_bytes = await audio.read()
+    try:
+        text = gnani_speech_to_text(audio_bytes, language)
+    except RuntimeError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    return STTResponse(text=text)
 
 
 @app.post("/feedback", response_model=FeedbackResponse)

@@ -205,8 +205,8 @@ def _call_gemini(prompt: str, system_instruction: str, max_output_tokens: int = 
             f"[debug: {_client_error}]"
         )
 
-    delay = 5
-    max_retries = 5
+    delay = 2
+    max_retries = 3
     for attempt in range(1, max_retries + 1):
         try:
             from google.genai import types
@@ -254,6 +254,81 @@ def get_ai_reply(user_message: str, context_block: str, history_text: str = "") 
     )
 
     return _call_gemini(prompt, SYSTEM_INSTRUCTION)
+
+
+# ---------------------------------------------------------------------------
+# GNANI.AI VOICE — TTS (text -> speech) and STT (speech -> text) for Indian
+# languages. Requires GNANI_API_KEY in .env (get one at https://gnani.ai).
+# For STT, GNANI_ORGANIZATION_ID and GNANI_USER_ID may also be required —
+# check your Gnani dashboard/docs, since these vary by plan.
+# ---------------------------------------------------------------------------
+
+import base64
+import requests
+
+GNANI_API_KEY = os.environ.get("GNANI_API_KEY", "").strip()
+GNANI_TTS_URL = "https://api.vachana.ai/api/v1/tts/sse"
+
+
+def gnani_text_to_speech(text: str, language: str = "hi", voice: str = "Karan") -> bytes:
+    """Calls Gnani's TTS REST API and returns raw audio bytes (mp3).
+    Raises RuntimeError on failure — the caller (app.py endpoint) turns
+    that into a clean HTTP error."""
+    if not GNANI_API_KEY:
+        raise RuntimeError("GNANI_API_KEY is missing. Add it to your .env file.")
+
+    payload = {
+        "audio_config": {
+            "bitrate": "192k",
+            "container": "mp3",
+            "encoding": "linear_pcm",
+            "num_channels": 1,
+            "sample_rate": 44100,
+            "sample_width": 2,
+        },
+        "model": "vachana-voice-v3",
+        "text": text,
+        "voice": voice,
+        "language": language,
+    }
+    headers = {"X-API-Key-ID": GNANI_API_KEY, "Content-Type": "application/json"}
+
+    resp = requests.post(GNANI_TTS_URL, json=payload, headers=headers, timeout=30)
+    if resp.status_code != 200:
+        raise RuntimeError(f"Gnani TTS error {resp.status_code}: {resp.text}")
+
+    # The /sse endpoint streams chunks; for a simple non-streaming call the
+    # response body is the audio bytes directly. If your account only
+    # supports the streaming form, switch to the gnani-vachana SDK instead
+    # (pip install gnani-vachana) which handles SSE parsing for you.
+    return resp.content
+
+
+def gnani_speech_to_text(audio_bytes: bytes, language: str = "hi-IN") -> str:
+    """Transcribes audio using Gnani's Vachana STT via their official SDK.
+    Requires: pip install gnani-vachana
+    Raises RuntimeError on failure."""
+    if not GNANI_API_KEY:
+        raise RuntimeError("GNANI_API_KEY is missing. Add it to your .env file.")
+
+    try:
+        from gnani_vachana import SttClient  # official Gnani SDK
+    except ImportError:
+        raise RuntimeError(
+            "The gnani-vachana package isn't installed. Run: "
+            "pip install gnani-vachana --break-system-packages"
+        )
+
+    client = SttClient(
+        api_key=GNANI_API_KEY,
+        organization_id=os.environ.get("GNANI_ORGANIZATION_ID", "").strip() or None,
+        user_id=os.environ.get("GNANI_USER_ID", "").strip() or None,
+    )
+    result = client.recognize(audio=audio_bytes, language=language)
+    # NOTE: verify the exact response shape against the SDK's current docs —
+    # this assumes a `.text` attribute on the result, which is the common
+    # pattern for their REST-based non-streaming recognize() call.
+    return getattr(result, "text", "") or ""
 
 
 def get_simple_explanation(original_text: str) -> str:
