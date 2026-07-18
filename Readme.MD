@@ -1,80 +1,223 @@
-# RightBridge — Chatbot Backend (Step 1)
+# RightBridge
 
-Down to **4 Python files** now — easier to drag into VS Code.
+### AI-Powered Government Scheme Assistant for Migrant Workers
 
-| File | What's inside |
-|---|---|
-| `app.py` | FastAPI app: request/response schemas + all endpoints (`/chat`, `/schemes`, `/health`) |
-| `data.py` | Database setup, `Scheme`/`ConversationLog` tables, 10 seed schemes, Hugging Face dataset loader |
-| `ai.py` | Keyword retrieval + Gemini API call (system prompt with grounding rules) |
-| `test_chat.py` | Terminal chat client — talk to your bot without Postman/Telegram |
+RightBridge is an AI-powered multilingual chatbot designed to help migrant workers easily discover government welfare schemes, understand eligibility, access required documents, locate nearby support centers, and receive emergency labour assistance through a simple conversational interface.
 
-Plus: `requirements.txt`, `.env.example`, `.gitignore`, this `README.md`.
+Developed for the **Build in AI for India Hackathon**.
 
-## Setup (one time)
+---
 
-1. Create a new empty folder, e.g. `rightbridge`, and put all the downloaded files inside it directly (not in a subfolder).
-2. Open that folder in VS Code (File → Open Folder).
-3. Open the integrated terminal (View → Terminal) and run:
+## Problem Statement
+
+Millions of migrant workers struggle to access government welfare schemes because of:
+
+- Lack of awareness about available schemes
+- Language barriers
+- Complex application procedures
+- Difficulty understanding eligibility
+- Limited access to official guidance and nearby support centers
+
+RightBridge simplifies this process using Artificial Intelligence.
+
+---
+
+## Key Features
+
+- AI-powered Government Scheme Chatbot
+- Multilingual Support
+- Government Scheme Information
+- Required Documents Assistant
+- Nearby Help Centers
+- Explain Simply (Easy-to-understand responses)
+- Emergency Labour Helpline Support
+
+---
+
+## Technology Stack
+
+| Category | Technology |
+|----------|------------|
+| Frontend | HTML, CSS, JavaScript |
+| Backend | Python, FastAPI |
+| Database | SQLite |
+| AI Model | Google Gemini API |
+| Version Control | Git & GitHub |
+| Development Tool | Visual Studio Code |
+
+---
+
+## Project Workflow
+
+```text
+User
+   │
+   ▼
+RightBridge Chatbot
+   │
+   ▼
+Gemini AI
+   │
+   ▼
+Government Scheme Database
+   │
+   ▼
+Personalized Response
+```
+
+---
+
+## Project Structure
+
+```text
+RightBridge_Ai/
+│
+├── app.py
+├── ai.py
+├── data.py
+├── index.html
+├── requirements.txt
+├── rightbridge.db
+├── updated_data.csv
+├── README.md
+├── .gitignore
+│
+├── images/
+│   ├── home.png
+│   ├── chatbot.png
+│   ├── documents.png
+│   ├── nearby_help.png
+│   └── emergency.png
+```
+
+---
+
+## Installation
+
+Clone the repository
+
+```bash
+git clone https://github.com/Matheswaran2903/RightBridge_Ai.git
+```
+
+Navigate to the project
+
+```bash
+cd RightBridge_Ai
+```
+
+Create a virtual environment
 
 ```bash
 python -m venv venv
-# Windows:
+```
+
+Activate the virtual environment
+
+**Windows**
+
+```bash
 venv\Scripts\activate
-# Mac/Linux:
-source venv/bin/activate
-
-pip install -r requirements.txt --break-system-packages
 ```
 
-4. Get a **free** Gemini API key: https://aistudio.google.com/apikey
-5. Copy `.env.example` → `.env` (same folder) and paste your key:
-```
-GEMINI_API_KEY=AIza...
-```
-
-## Run it
-
-**Terminal 1 — start the server:**
-```bash
-uvicorn app:app --reload
-```
-On first startup it auto-loads the Hugging Face dataset `shrijayan/gov_myscheme`. If that fails for any reason (no internet, dataset renamed, rate limited) it silently falls back to the 10 built-in seed schemes — the app never breaks.
-
-Check it worked:
-```
-http://127.0.0.1:5000/health
-```
-→ `{"status":"ok","schemes_loaded":723}` (or `10` if on seed fallback)
-
-**Terminal 2 (click `+` in the VS Code terminal panel) — chat with it:**
-```bash
-python test_chat.py
-```
-Or open **http://127.0.0.1:5000/docs** in your browser and try `/chat` directly — no extra tools needed.
-
-## Reload fresh data from Hugging Face
+Install dependencies
 
 ```bash
-python data.py --reset
+pip install -r requirements.txt
 ```
 
-## If Hugging Face field names don't match
+Run the application
 
-`data.py` prints the real column names on every load attempt:
+```bash
+python app.py
 ```
-[data] Sample raw row keys: ['scheme_name', 'eligibility_description', ...]
+
+---
+
+## Demo Video
+
+Watch the complete project demonstration here:
+
+**Google Drive Link**
+
 ```
-If scheme details look empty, paste me that line and I'll update the `FIELD_ALIASES` dict in `data.py` to match.
+https://drive.google.com/file/d/1UJsPUbjD6QKTm2zITqIEm_EOUx2JzDRS/view?usp=sharing
+```
 
-## Troubleshooting
+---
 
-| Symptom | Fix |
-|---|---|
-| `"The AI service isn't configured yet..."` in replies | `.env` missing or `GEMINI_API_KEY` empty/wrong |
-| `schemes_loaded: 10` in `/health` | Running on seed fallback — fine for testing, run `python data.py --reset` once you have internet |
-| `ModuleNotFoundError` | Re-run `pip install -r requirements.txt --break-system-packages` with the venv activated |
+## Screenshots
 
-## Next step
+### Home Page
 
-Once this works well locally: deploy to Hugging Face Spaces or Render (free, no card), then wire up Telegram. Ask for that next when ready.
+![Home Page](images/Homepage.png)
+
+---
+
+### AI Chatbot
+
+![Chatbot](images/Chatbot.png)
+
+---
+
+### Required Documents
+
+![Required Documents](images/Document.png)
+
+---
+
+### Nearby Help Centers
+
+![Nearby Help Centers](images/helpline.png)
+
+---
+
+### Emergency Labour Support
+
+![Emergency Support](images/chek.png)
+
+---
+
+## Future Enhancements
+
+- Voice Assistant
+- OCR-based Document Verification
+- AI Eligibility Checker
+- WhatsApp Integration
+- Mobile Application
+- Cloud Deployment
+- Real-time Government Scheme Updates
+
+---
+
+## Team
+
+**Team Name:** GenCoders
+
+### Team Members
+
+- Matheswaran G
+- LingeshPandian L
+
+---
+
+## Hackathon
+
+**Build in AI for India Hackathon**
+
+---
+
+## License
+
+This project is developed for educational and hackathon purposes.
+
+---
+
+## Contact
+
+For any queries or collaboration regarding this project:
+
+**Team GenCoders**
+
+GitHub Repository:
+https://github.com/Matheswaran2903/RightBridge_Ai

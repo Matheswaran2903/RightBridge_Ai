@@ -205,8 +205,8 @@ def _call_gemini(prompt: str, system_instruction: str, max_output_tokens: int = 
             f"[debug: {_client_error}]"
         )
 
-    delay = 2
-    max_retries = 3
+    delay = 5
+    max_retries = 5
     for attempt in range(1, max_retries + 1):
         try:
             from google.genai import types
