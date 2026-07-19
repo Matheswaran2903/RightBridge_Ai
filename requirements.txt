@@ -7,3 +7,4 @@ python-dotenv==1.0.1
 datasets==3.2.0
 pandas==2.2.3
 pymupdf==1.25.1
+python-multipart
