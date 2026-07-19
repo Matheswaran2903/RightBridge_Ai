@@ -23,7 +23,9 @@ from ai import (
     get_simple_explanation, needs_help_centers, needs_emergency_numbers,
     HELP_CENTERS_TEXT, EMERGENCY_NUMBERS_TEXT, clean_scheme_text,
     gnani_text_to_speech, gnani_speech_to_text,
+    needs_translation_for_search, translate_for_search,
 )
+from whatsapp import router as whatsapp_router
 
 # ---------------------------------------------------------------------------
 # Request / response schemas
@@ -119,6 +121,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(whatsapp_router)
 
 
 def get_db():
@@ -238,7 +242,10 @@ def chat(request: ChatRequest, db: Session = Depends(get_db)):
     if not request.message.strip():
         raise HTTPException(status_code=400, detail="Message cannot be empty.")
 
-    schemes = retrieve_relevant_schemes(db, request.message)
+    search_query = request.message
+    if needs_translation_for_search(request.message):
+        search_query = translate_for_search(request.message)
+    schemes = retrieve_relevant_schemes(db, search_query)
     context = format_context(schemes)
     history_text = _build_history_text(db, request.user_id)
     reply = get_ai_reply(request.message, context, history_text)

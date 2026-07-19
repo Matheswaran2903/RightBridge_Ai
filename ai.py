@@ -36,6 +36,13 @@ def _tokenize(text: str) -> List[str]:
     return [w for w in words if len(w) > 2 and w not in _STOPWORDS]
 
 
+def needs_translation_for_search(text: str) -> bool:
+    """True if the query has no usable English keywords (e.g. pure Tamil/
+    Hindi/other script) — the DB is in English, so keyword search would
+    otherwise return random unrelated schemes instead of relevant ones."""
+    return not _tokenize(text)
+
+
 def retrieve_relevant_schemes(db: Session, query: str, limit: int = 5) -> List[Scheme]:
     """Returns up to `limit` schemes most relevant to the query."""
     keywords = _tokenize(query)
@@ -289,6 +296,33 @@ def _call_gemini(prompt: str, system_instruction: str, max_output_tokens: int = 
                 "Please try again in a moment. "
                 f"[debug: {e}]"
             )
+
+
+TRANSLATE_SYSTEM_INSTRUCTION = """You translate short questions into English \
+so they can be used to search an English-language database. Reply with ONLY \
+the English translation — no extra words, no explanation, no quotes."""
+
+
+def translate_for_search(text: str) -> str:
+    """Translates a non-English query into English, used ONLY to pick which
+    schemes to retrieve from the database. The user-facing reply is still
+    generated in the user's original language separately. Falls back to the
+    original text if translation fails."""
+    if _client is None:
+        return text
+    try:
+        translated = _call_gemini(
+            f"Translate to English:\n\n{text}",
+            TRANSLATE_SYSTEM_INSTRUCTION,
+            max_output_tokens=100,
+        )
+        # If the AI service errored out, _call_gemini returns a long
+        # human-readable error string — don't use that as a search query.
+        if translated and "Sorry" not in translated and "debug:" not in translated:
+            return translated
+    except Exception:
+        pass
+    return text
 
 
 def get_ai_reply(user_message: str, context_block: str, history_text: str = "") -> str:
