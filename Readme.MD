@@ -176,7 +176,7 @@ https://drive.google.com/file/d/1UJsPUbjD6QKTm2zITqIEm_EOUx2JzDRS/view?usp=shari
 
 ![Emergency Support](images/chek.png)
 
-## WhataApp Integration Images
+## WhataApp_Integration_Images
 
 ![WhatsApp integration](images/what 1.png)
 ![WhatsApp integration](images/what 2.png)
