@@ -178,8 +178,8 @@ https://drive.google.com/file/d/1UJsPUbjD6QKTm2zITqIEm_EOUx2JzDRS/view?usp=shari
 
 ## WhatsApp_Integration_Images
 
-![WhatsApp integration](images/what 1.png)
-![WhatsApp integration](images/what 2.png)
+![WhatsApp integration](images/whatsapp-1.png)
+![WhatsApp integration](images/whatsapp-2.png)
 ---
 
 ## Future Enhancements
